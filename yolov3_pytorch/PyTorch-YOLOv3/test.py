@@ -55,7 +55,24 @@ def evaluate(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size
 
     return precision, recall, AP, f1, ap_class
 
+import numpy as np
+import cv2
+def imshow(img):
+    img = img / 2 + 0.5     # unnormalize
+    npimg = img.numpy()
+    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.show()
+
 def test_one_image(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size):
+    model.eval()  # must be call
+
+    img = cv2.imread("./data/samples/dog.jpg")
+
+    cv2.imshow(img);
+    cv2.waitKey(0);
+
+    # outputs = model(images)
+    # outputs = non_max_suppression(outputs, conf_thres=conf_thres, nms_thres=nms_thres)
 
 
 if __name__ == "__main__":
