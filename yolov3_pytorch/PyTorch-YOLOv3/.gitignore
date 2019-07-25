@@ -1,0 +1,4 @@
+*.jpg
+*.png
+utils/__pycache__/
+data/coco
