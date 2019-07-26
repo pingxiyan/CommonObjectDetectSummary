@@ -97,6 +97,7 @@ if __name__ == "__main__":
     class_names = load_classes(data_config["names"])
 
     # Initiate model
+    print("Initiate model ...")
     model = Darknet(opt.model_def).to(device)
     if opt.weights_path.endswith(".weights"):
         # Load darknet weights
@@ -105,7 +106,7 @@ if __name__ == "__main__":
         # Load checkpoint weights
         model.load_state_dict(torch.load(opt.weights_path))
 
-    print("Compute mAP...")
+    # print("Compute mAP...")
 
     # precision, recall, AP, f1, ap_class = evaluate(
     #     model,
@@ -117,10 +118,17 @@ if __name__ == "__main__":
     #     batch_size=8,
     # )
 
-    test_one_image()
+    test_one_image(model,
+        path=valid_path,
+        iou_thres=opt.iou_thres,
+        conf_thres=opt.conf_thres,
+        nms_thres=opt.nms_thres,
+        img_size=opt.img_size,
+        batch_size=8,
+    )
 
-    print("Average Precisions:")
-    for i, c in enumerate(ap_class):
-        print("f+ Class '{c}' ({class_names[c]}) - AP: {AP[i]}")
+    # print("Average Precisions:")
+    # for i, c in enumerate(ap_class):
+    #     print("f+ Class '{c}' ({class_names[c]}) - AP: {AP[i]}")
 
-    print("mAP: {AP.mean()}")
+    # print("mAP: {AP.mean()}")

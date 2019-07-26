@@ -2,3 +2,4 @@
 *.png
 utils/__pycache__/
 data/coco
+__pycache__
