@@ -58,6 +58,8 @@ def evaluate(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size
 import numpy as np
 import cv2
 from numpy import float32
+from datetime import datetime
+
 
 def imshow(img):
     img = img / 2 + 0.5     # unnormalize
@@ -65,10 +67,10 @@ def imshow(img):
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
 
-def test_one_image(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size):
+def test_one_image(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size, use_gpu):
     model.eval()  # must be call
-    # Tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
-    Tensor = torch.FloatTensor
+
+    Tensor = torch.cuda.FloatTensor if use_gpu else torch.FloatTensor
 
     img = cv2.imread("./data/samples/dog.jpg")
     img = cv2.resize(img, (416,416))
@@ -81,28 +83,40 @@ def test_one_image(model, path, iou_thres, conf_thres, nms_thres, img_size, batc
 
     img=img.reshape(-1, img.shape[0], img.shape[1], img.shape[2]).astype(float32)
     img = img/255.0
+
+    # for i in range():
+    #     img=np.concatenate((img, img), axis=0)
+    # img=np.concatenate((img, img), axis=0)
+
     print(img.shape)
     img = np.transpose(img,axes=(0, 3, 1, 2)) 
     print(img.shape)
 
     # images
-    images = torch.from_numpy(img)
+    images = torch.from_numpy(img).cuda() if use_gpu else torch.from_numpy(img).cpu()
+
     print(type(images))
     print(images.shape)
     # exit(0)
     outputs = model(images)
+
+    dt0 = time.process_time() 
+    # for i in range(1000):
+    #     outputs = model(images)
+    outputs = model(images)
+    dt1 = time.process_time() 
+
+    print("process time =", dt1 - dt0, "s")
     # print(len(outputs[0]))  # output 10647 rectangle
     conf_thres = 0.8
     outputs = non_max_suppression(outputs, conf_thres=conf_thres, nms_thres=nms_thres)
     # Output 7 Dim() (x,y,w,h,confidence,...)  
 
-    # print(type(outputs))
-    # print(len(outputs[0][0]))
-    # print(outputs[0][0])
-    for rt in outputs[0]:
-        cv2.rectangle(src, (rt[0], rt[1]),(rt[2], rt[3]), (255,0,0), 1)
-    cv2.imshow("x", src);
-    cv2.waitKey(0);
+    # for rslt in outputs:
+    #     for rt in rslt[0]:
+    #         cv2.rectangle(src, (rt[0], rt[1]),(rt[2], rt[3]), (255,0,0), 2)
+    #     cv2.imshow("x", src);
+    #     cv2.waitKey(0);
 
 
 
@@ -122,7 +136,16 @@ if __name__ == "__main__":
     print(opt)
 
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = torch.device("cpu")
+    # device = torch.device("cpu")
+    device = None
+    use_gpu = torch.cuda.is_available()
+    # use_gpu = False
+    if use_gpu:
+        device = "cuda"
+        print("Support GPU")
+    else:
+        device = "cpu"
+        print("Support CPU")
 
     data_config = parse_data_config(opt.data_config)
     valid_path = data_config["valid"]
@@ -157,6 +180,7 @@ if __name__ == "__main__":
         nms_thres=opt.nms_thres,
         img_size=opt.img_size,
         batch_size=1,
+        use_gpu=use_gpu
     )
 
     # print("Average Precisions:")
