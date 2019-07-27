@@ -67,7 +67,7 @@ def imshow(img):
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
 
-def test_one_image(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size, use_gpu):
+def test_one_image(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size, use_gpu, yolov3_lite):
     model.eval()  # must be call
 
     Tensor = torch.cuda.FloatTensor if use_gpu else torch.FloatTensor
@@ -97,27 +97,43 @@ def test_one_image(model, path, iou_thres, conf_thres, nms_thres, img_size, batc
 
     print(type(images))
     print(images.shape)
-    # exit(0)
+
     outputs = model(images)
 
-    dt0 = time.process_time() 
+    dt0 = time.process_time() # statistic process time
     # for i in range(1000):
     #     outputs = model(images)
     outputs = model(images)
+
     dt1 = time.process_time() 
-
     print("process time =", dt1 - dt0, "s")
-    # print(len(outputs[0]))  # output 10647 rectangle
-    conf_thres = 0.8
-    outputs = non_max_suppression(outputs, conf_thres=conf_thres, nms_thres=nms_thres)
-    # Output 7 Dim() (x,y,w,h,confidence,...)  
 
-    # for rslt in outputs:
-    #     for rt in rslt[0]:
-    #         cv2.rectangle(src, (rt[0], rt[1]),(rt[2], rt[3]), (255,0,0), 2)
-    #     cv2.imshow("x", src);
-    #     cv2.waitKey(0);
-
+    if yolov3_lite:
+        print(len(outputs[0][0]))  # output 10647 rectangle
+        print(outputs[0][0])  # output 10647 rectangle
+        # exit(0)
+        conf_thres = 0.8
+        # nms_thres=0.1
+        outputs = non_max_suppression(outputs, conf_thres=conf_thres, nms_thres=nms_thres)
+        # Output 7 Dim() (x,y,w,h,confidence,...)  
+        print(len(outputs))
+        print(outputs)
+        # for rslt in outputs:
+        # for rt in outputs[0]:
+        #     cv2.rectangle(src, (rt[0], rt[1]),(rt[2], rt[3]), (255,0,0), 2)
+        # cv2.imshow("x", src);
+        # cv2.waitKey(0);
+    else:
+        # print(len(outputs[0]))  # output 10647 rectangle
+        conf_thres = 0.8
+        outputs = non_max_suppression(outputs, conf_thres=conf_thres, nms_thres=nms_thres)
+        # Output 7 Dim() (x,y,w,h,confidence,...)  
+        # print(len(outputs[0]))
+        # for rslt in outputs:
+        for rt in outputs[0]:
+            cv2.rectangle(src, (rt[0], rt[1]),(rt[2], rt[3]), (255,0,0), 2)
+        cv2.imshow("x", src);
+        cv2.waitKey(0);
 
 
 if __name__ == "__main__":
@@ -153,6 +169,8 @@ if __name__ == "__main__":
 
     # Initiate model
     print("Initiate model ...")
+    yolov3_lite = False
+    opt.model_def = "./config/yolov3-tiny.cfg" if yolov3_lite else "config/yolov3.cfg"
     model = Darknet(opt.model_def).to(device)
     if opt.weights_path.endswith(".weights"):
         # Load darknet weights
@@ -180,7 +198,8 @@ if __name__ == "__main__":
         nms_thres=opt.nms_thres,
         img_size=opt.img_size,
         batch_size=1,
-        use_gpu=use_gpu
+        use_gpu=use_gpu,
+        yolov3_lite=yolov3_lite,
     )
 
     # print("Average Precisions:")
