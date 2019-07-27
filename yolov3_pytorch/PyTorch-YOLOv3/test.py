@@ -73,9 +73,14 @@ def test_one_image(model, path, iou_thres, conf_thres, nms_thres, img_size, batc
     img = cv2.imread("./data/samples/dog.jpg")
     img = cv2.resize(img, (416,416))
 
-    # cv2.imshow("x", img);
+    src=img
+
+    # cv2.rectangle(src, (10,10),(100,100), (255,0,0), 1)
+    # cv2.imshow("x", src);
     # cv2.waitKey(0);
+
     img=img.reshape(-1, img.shape[0], img.shape[1], img.shape[2]).astype(float32)
+    img = img/255.0
     print(img.shape)
     img = np.transpose(img,axes=(0, 3, 1, 2)) 
     print(img.shape)
@@ -87,13 +92,17 @@ def test_one_image(model, path, iou_thres, conf_thres, nms_thres, img_size, batc
     # exit(0)
     outputs = model(images)
     # print(len(outputs[0]))  # output 10647 rectangle
+    conf_thres = 0.8
     outputs = non_max_suppression(outputs, conf_thres=conf_thres, nms_thres=nms_thres)
-    # Output 7 Dim()
-    
+    # Output 7 Dim() (x,y,w,h,confidence,...)  
 
-    print(type(outputs))
-    print(len(outputs[0][0]))
-    print(outputs[0][0])
+    # print(type(outputs))
+    # print(len(outputs[0][0]))
+    # print(outputs[0][0])
+    for rt in outputs[0]:
+        cv2.rectangle(src, (rt[0], rt[1]),(rt[2], rt[3]), (255,0,0), 1)
+    cv2.imshow("x", src);
+    cv2.waitKey(0);
 
 
 
