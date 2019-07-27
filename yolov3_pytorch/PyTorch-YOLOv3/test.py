@@ -57,6 +57,8 @@ def evaluate(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size
 
 import numpy as np
 import cv2
+from numpy import float32
+
 def imshow(img):
     img = img / 2 + 0.5     # unnormalize
     npimg = img.numpy()
@@ -65,14 +67,34 @@ def imshow(img):
 
 def test_one_image(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size):
     model.eval()  # must be call
+    # Tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
+    Tensor = torch.FloatTensor
 
     img = cv2.imread("./data/samples/dog.jpg")
+    img = cv2.resize(img, (416,416))
 
-    cv2.imshow(img);
-    cv2.waitKey(0);
+    # cv2.imshow("x", img);
+    # cv2.waitKey(0);
+    img=img.reshape(-1, img.shape[0], img.shape[1], img.shape[2]).astype(float32)
+    print(img.shape)
+    img = np.transpose(img,axes=(0, 3, 1, 2)) 
+    print(img.shape)
 
-    # outputs = model(images)
-    # outputs = non_max_suppression(outputs, conf_thres=conf_thres, nms_thres=nms_thres)
+    # images
+    images = torch.from_numpy(img)
+    print(type(images))
+    print(images.shape)
+    # exit(0)
+    outputs = model(images)
+    # print(len(outputs[0]))  # output 10647 rectangle
+    outputs = non_max_suppression(outputs, conf_thres=conf_thres, nms_thres=nms_thres)
+    # Output 7 Dim()
+    
+
+    print(type(outputs))
+    print(len(outputs[0][0]))
+    print(outputs[0][0])
+
 
 
 if __name__ == "__main__":
@@ -90,7 +112,8 @@ if __name__ == "__main__":
     opt = parser.parse_args()
     print(opt)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
 
     data_config = parse_data_config(opt.data_config)
     valid_path = data_config["valid"]
@@ -124,7 +147,7 @@ if __name__ == "__main__":
         conf_thres=opt.conf_thres,
         nms_thres=opt.nms_thres,
         img_size=opt.img_size,
-        batch_size=8,
+        batch_size=1,
     )
 
     # print("Average Precisions:")

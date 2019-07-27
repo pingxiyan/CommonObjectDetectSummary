@@ -11,7 +11,10 @@ from network import Net
 def cvt_model(pickle_model, script_model):
     print("start convert")
     print("Initiate model ...")
-    model = Darknet(opt.model_def).to(device)
+    
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
+    model = Darknet("config/yolov3.cfg").to(device)
     
     if pickle_model.endswith(".weights"):
         # Load darknet weights
